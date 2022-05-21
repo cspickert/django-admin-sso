@@ -1,4 +1,4 @@
-**NOTE! django-admin-sso uses Google's `oauth2client <https://github.com/googleapis/oauth2client>`__ which has been deprecated for a long time; the repository has even been archived by Google now. django-admin-sso isn't going anywhere but I'd recommend that new projects use `django-authlib's Admin OAuth support <https://github.com/matthiask/django-authlib/#admin-oauth2>`__.**
+**NOTE!** django-admin-sso uses Google's `oauth2client <https://github.com/googleapis/oauth2client>`__  which has been deprecated for a long time; the repository has even been archived by Google now. django-admin-sso isn't going anywhere but I'd recommend that new projects use `django-authlib's Admin OAuth support <https://github.com/matthiask/django-authlib/#admin-oauth2>`__.
 
 ================
 Django admin SSO
