@@ -47,6 +47,14 @@ class OAuthViewTest(TestCase):
         self.assertTrue("Location" in rv)
         self.assertTrue(rv["Location"].startswith(settings.DJANGO_ADMIN_SSO_AUTH_URI))
 
+    def test_start_with_next(self):
+        start_url = reverse("admin:admin_sso_assignment_start")
+        rv = self.client.get(start_url + "?next=/admin/xxx/")
+        self.assertEqual(rv.status_code, 302)
+        self.assertTrue("Location" in rv)
+        self.assertTrue(rv["Location"].startswith(settings.DJANGO_ADMIN_SSO_AUTH_URI))
+        self.assertEqual(self.client.cookies["admin_sso-next"].value, "/admin/xxx/")
+
     def test_end_without_code(self):
         end_url = reverse("admin:admin_sso_assignment_end")
         rv = self.client.get(end_url)
@@ -73,6 +81,48 @@ class OAuthViewTest(TestCase):
         rv = self.client.get(end_url + "?code=xxx")
         self.assertEqual(rv.status_code, 302)
         self.assertTrue("Location" in rv)
+        self.assertEqual(str(self.client.session["_auth_user_id"]), str(self.user.id))
+        self.assertEqual(
+            self.client.session["_auth_user_backend"],
+            "admin_sso.auth.DjangoSSOAuthBackend",
+        )
+        setattr(views, "flow_override", None)
+
+    def test_end_with_next(self):
+        from admin_sso import views
+
+        setattr(
+            views,
+            "flow_override",
+            FlowMock({"email_verified": True, "email": "test@example.com"}),
+        )
+        self.client.cookies["admin_sso-next"] = "/admin/xxx/"
+        end_url = reverse("admin:admin_sso_assignment_end")
+        rv = self.client.get(end_url + "?code=xxx")
+        self.assertEqual(rv.status_code, 302)
+        self.assertTrue("Location" in rv)
+        self.assertTrue(rv["Location"].endswith("/admin/xxx/"))
+        self.assertEqual(str(self.client.session["_auth_user_id"]), str(self.user.id))
+        self.assertEqual(
+            self.client.session["_auth_user_backend"],
+            "admin_sso.auth.DjangoSSOAuthBackend",
+        )
+        setattr(views, "flow_override", None)
+
+    def test_end_with_invalid_next(self):
+        from admin_sso import views
+
+        setattr(
+            views,
+            "flow_override",
+            FlowMock({"email_verified": True, "email": "test@example.com"}),
+        )
+        self.client.cookies["admin_sso-next"] = "http://xxx"
+        end_url = reverse("admin:admin_sso_assignment_end")
+        rv = self.client.get(end_url + "?code=xxx")
+        self.assertEqual(rv.status_code, 302)
+        self.assertTrue("Location" in rv)
+        self.assertTrue(rv["Location"].endswith("/admin/"))
         self.assertEqual(str(self.client.session["_auth_user_id"]), str(self.user.id))
         self.assertEqual(
             self.client.session["_auth_user_backend"],
